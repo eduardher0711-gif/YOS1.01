@@ -2,247 +2,197 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Glow House by Yoss</title>
+    <title>Glow House | Panel</title>
     <style>
-        :root { --primary-pink: #fd79a8; --dark-pink: #e84393; --soft-bg: #fff5f7; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--soft-bg); }
+        :root { --primary-pink: #fd79a8; --dark-pink: #e84393; --bg: #fff5f7; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
+        #vista-auth { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg); z-index:100; display: flex; justify-content:center; align-items:center; }
+        .box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        .sidebar { width: 250px; background: #fff; border-right: 1px solid #ddd; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .nav-btn { background: none; border: none; padding: 15px; text-align: left; cursor: pointer; font-weight: bold; border-radius: 8px; transition: 0.3s; position: relative; }
+        .nav-btn:hover, .nav-btn.active { background: var(--primary-pink); color: white; }
+        .badge { background: red; color: white; font-size: 10px; padding: 2px 6px; border-radius: 50%; position: absolute; top: 5px; right: 5px; display: none; }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
         .section { display: none; } .section.active { display: block; }
-        .container { max-width: 1000px; margin: 2rem auto; padding: 1rem; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .box { max-width: 400px; margin: auto; text-align: center; }
-        
-        /* Botones generales */
-        .btn-add { background: var(--dark-pink); color: white; border: none; padding: 0.7rem; width: 100%; border-radius: 8px; cursor: pointer; margin-top: 10px; font-weight: bold; }
-        .btn-add:hover { background: var(--primary-pink); }
-
-        /* Filtro de Categorías */
-        .categorias-bar { display: flex; gap: 10px; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap; }
-        .btn-cat { background: white; border: 2px solid var(--primary-pink); color: var(--dark-pink); padding: 0.5rem 1.2rem; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-cat.selected { background: var(--primary-pink); color: white; }
-
-        /* Cuadrícula de productos */
-        .productos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
-        .producto-card { border: 1px solid #ffe3e8; padding: 15px; border-radius: 12px; text-align: center; background: #fff; transition: 0.3s; }
-        .producto-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(253, 121, 168, 0.2); }
-        .producto-card img { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
-        
-        .item-row { border-bottom: 1px solid #ddd; padding: 10px 0; font-size: 0.9rem; }
-        header h1 { color: var(--dark-pink); margin: 0; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .btn-add { background: var(--dark-pink); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 5px; }
+        input { padding: 8px; margin: 5px 0; width: 90%; border: 1px solid #ccc; border-radius: 5px; }
     </style>
 </head>
 <body>
 
-    <div id="vista-auth" class="section active container">
+    <div id="vista-auth" class="section active">
         <div class="box">
-            <h2 style="color: var(--dark-pink);">✨ Glow House ✨</h2>
-            <p>Ingresa tus datos para ver el catálogo</p>
-            <input type="text" id="reg-nombre" placeholder="Nombre completo" style="width: 90%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ddd;"><br>
-            <input type="tel" id="user-tel" placeholder="Número de teléfono" style="width: 90%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ddd;"><br>
+            <h2>✨ Glow House ✨</h2>
+            <input type="text" id="reg-nombre" placeholder="Nombre completo"><br>
+            <input type="tel" id="user-tel" placeholder="Número de teléfono"><br>
             <button class="btn-add" onclick="login()">INGRESAR</button>
             <button class="btn-add" style="background:#6c5ce7;" onclick="registrar()">REGISTRARME</button>
         </div>
     </div>
 
-    <div id="vista-tienda" class="section container">
-        <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-            <h1>Glow House by Yoss</h1>
-            <button onclick="toggleAdmin()" style="background:none; border: 1px solid #ddd; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Admin</button>
-        </header>
+    <div id="panel-sidebar" class="sidebar">
+        <h2>Glow House</h2>
+        <button class="nav-btn active" onclick="showSection('seccion-catalogo', this)">🛍️ Catálogo</button>
+        <button class="nav-btn" id="btn-pedidos" onclick="marcarComoVisto(); showSection('seccion-pedidos', this)">
+            📦 Mis Pedidos <span id="notif-badge" class="badge">!</span>
+        </button>
+        <hr style="width:100%">
+        <button class="nav-btn" onclick="toggleAdmin()">⚙️ Panel Admin</button>
+    </div>
 
-        <div class="categorias-bar" id="filtro-botones">
-            <button class="btn-cat selected" onclick="renderTienda('Todos')">Todos</button>
-            <button class="btn-cat" onclick="renderTienda('Maquillaje')">Maquillaje</button>
-            <button class="btn-cat" onclick="renderTienda('Estilismo')">Estilismo</button>
-            <button class="btn-cat" onclick="renderTienda('Perfumes')">Perfumes</button>
-        </div>
-
-        <div class="productos-grid" id="contenedor-productos"></div>
-
-        <hr style="margin: 2rem 0; border: 0.5px solid #eee;">
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div id="carrito-seccion" style="background: #fffafb; padding: 15px; border-radius: 10px;">
-                <h3>Tu Carrito 🛒</h3>
+    <div id="contenedor-principal" class="main-content">
+        <div id="seccion-catalogo" class="section active">
+            <h3>Catálogo de Productos</h3>
+            <div class="grid" id="lista-productos"></div>
+            <div style="margin-top:30px; background:white; padding:20px; border-radius:12px;">
+                <h3>Carrito (Envío L.140)</h3>
                 <div id="contenido-carrito"></div>
                 <p><strong>Total: L.<span id="total-precio">0.00</span></strong></p>
                 <button class="btn-add" style="background:green;" onclick="enviarPedido()">CONFIRMAR COMPRA</button>
             </div>
-
-            <div id="historial-seccion" style="background: #f8f9fa; padding: 15px; border-radius: 10px;">
-                <h3>Mis Pedidos 📦</h3>
-                <div id="historial-cliente">Cargando...</div>
-            </div>
+        </div>
+        <div id="seccion-pedidos" class="section">
+            <h3>Mis Pedidos</h3>
+            <div id="historial-cliente"></div>
         </div>
     </div>
 
-    <div id="vista-admin" class="section container">
-        <h3>Panel Administrativo</h3>
-        <button onclick="location.reload()" style="float: right;">Cerrar Sesión</button>
-        <form id="form-producto" onsubmit="agregarProducto(event)" style="background: #fdfdfd; padding: 15px; border: 1px solid #eee;">
-            <h4>Agregar Nuevo Producto</h4>
-            <input type="text" id="prod-nombre" placeholder="Nombre del producto" required style="width: 100%; margin-bottom: 10px;"><br>
-            <select id="prod-categoria" style="width: 100%; margin-bottom: 10px;">
-                <option>Maquillaje</option>
-                <option>Estilismo</option>
-                <option>Perfumes</option>
-            </select><br>
-            <input type="number" id="prod-precio" placeholder="Precio (L.)" required style="width: 100%; margin-bottom: 10px;"><br>
-            <label>Imagen del producto:</label><br>
-            <input type="file" id="prod-imagen-file" accept="image/*" required style="margin-bottom: 10px;"><br>
-            <button type="submit" class="btn-add">PUBLICAR EN CATÁLOGO</button>
-        </form>
+    <div id="seccion-admin" class="section" style="padding: 30px;">
+        <h2>Panel Administrativo</h2>
+        <button onclick="location.reload()">⬅️ Salir</button>
         <hr>
-        <h3>Control de Pedidos Realizados</h3>
-        <div id="lista-pedidos"></div>
+        <h3>Agregar Producto</h3>
+        <input id="new-prod-nombre" placeholder="Nombre">
+        <input id="new-prod-precio" placeholder="Precio">
+        <input id="new-prod-cat" placeholder="Categoría">
+        <label>Imagen:</label>
+        <input type="file" id="file-input" accept="image/*">
+        <button class="btn-add" onclick="procesarYGuardar()">Guardar Producto</button>
+        <hr>
+        <h3>Pedidos Pendientes</h3>
+        <div id="lista-pedidos-admin"></div>
     </div>
 
     <script>
         const URL = "https://script.google.com/macros/s/AKfycbxrWgVriVDp_ZiBDMmfnlgCHC9qSLFyCJGXo4xkaXChlhbsFPrZei0u0Q1_RLBmpaoq/exec";
         let state = { productos: [], pedidos: [], usuarios: [], carrito: [], usuarioActual: null };
+        let esAdmin = false;
+        let visto = false; // Variable para controlar si el usuario ya vio la notificación
 
-        // Carga inicial de datos
-        fetch(URL).then(r => r.json()).then(d => { 
-            state = { ...state, ...d }; 
-            renderTienda('Todos'); 
-            renderPedidos(); 
-        });
+        async function cargarDatos() {
+            const res = await fetch(URL);
+            const d = await res.json();
+            state = { ...state, ...d };
+            checkNotificaciones();
+            renderCatalogo();
+            if(document.getElementById('seccion-pedidos').classList.contains('active')) renderPedidos();
+            if(esAdmin) renderAdmin();
+        }
+        cargarDatos();
+        setInterval(cargarDatos, 5000);
 
-        function registrar() {
-            const nombre = document.getElementById('reg-nombre').value;
-            const tel = document.getElementById('user-tel').value;
-            if(state.usuarios.find(u => u.telefono == tel)) return alert("⚠️ ¡Este número ya está registrado!");
-            if(!nombre || !tel) return alert("Por favor completa los datos");
+        function marcarComoVisto() {
+            visto = true;
+            document.getElementById('notif-badge').style.display = 'none';
+            renderPedidos();
+        }
 
-            fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tipo: "registro", nombre, telefono: tel }) })
-            .then(() => { 
-                state.usuarios.push({nombre, telefono: tel}); 
-                alert("✅ Registro exitoso. ¡Ahora puedes ingresar!"); 
-            });
+        function checkNotificaciones() {
+            if(!state.usuarioActual || visto) return;
+            const tieneCambios = state.pedidos.some(p => p.tel == state.usuarioActual.telefono && p.estado !== 'Recibido');
+            document.getElementById('notif-badge').style.display = tieneCambios ? 'block' : 'none';
         }
 
         function login() {
             const tel = document.getElementById('user-tel').value;
             state.usuarioActual = state.usuarios.find(u => u.telefono == tel);
-            if(state.usuarioActual) {
-                document.getElementById('vista-auth').classList.remove('active');
-                document.getElementById('vista-tienda').classList.add('active');
-                mostrarHistorial();
-            } else alert("Usuario no encontrado. Regístrate si eres nuevo.");
-        }
-
-        // FUNCIÓN DE RENDERIZADO CON FILTRO
-        function renderTienda(categoriaSeleccionada) {
-            const contenedor = document.getElementById('contenedor-productos');
-            
-            // Filtrar productos según categoría
-            const productosFiltrados = categoriaSeleccionada === 'Todos' 
-                ? state.productos 
-                : state.productos.filter(p => p.categoria === categoriaSeleccionada);
-
-            // Dibujar productos
-            contenedor.innerHTML = productosFiltrados.map(p => `
-                <div class="producto-card">
-                    <img src="${p.imagen}">
-                    <div style="font-size: 0.8rem; color: #888;">${p.categoria}</div>
-                    <h4 style="margin: 5px 0;">${p.nombre}</h4>
-                    <p style="color: var(--dark-pink); font-weight: bold;">L. ${p.precio}</p>
-                    <button class="btn-add" onclick="agregarAlCarrito('${p.nombre}', ${p.precio}, '${p.categoria}')">Añadir al carrito</button>
-                </div>
-            `).join('');
-
-            // Actualizar estilo de botones de categoría
-            const botones = document.querySelectorAll('.btn-cat');
-            botones.forEach(btn => {
-                btn.classList.remove('selected');
-                if(btn.innerText === categoriaSeleccionada) btn.classList.add('selected');
-            });
-        }
-
-        function agregarAlCarrito(n, p, cat) {
-            state.carrito.push({ n, p, cat });
-            actualizarCarritoUI();
-        }
-
-        function actualizarCarritoUI() {
-            let total = state.carrito.reduce((s, i) => s + parseFloat(i.p), 0);
-            document.getElementById('contenido-carrito').innerHTML = state.carrito.map((i, index) => `
-                <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:5px;">
-                    <span>${i.n}</span>
-                    <span>L.${i.p} <button onclick="quitarCarrito(${index})" style="background:none; border:none; color:red; cursor:pointer;">X</button></span>
-                </div>
-            `).join('');
-            document.getElementById('total-precio').innerText = total.toFixed(2);
-        }
-
-        function quitarCarrito(idx) {
-            state.carrito.splice(idx, 1);
-            actualizarCarritoUI();
-        }
-
-        function enviarPedido() {
-            if(state.carrito.length === 0) return alert("El carrito está vacío");
-            let promesas = state.carrito.map(item => fetch(URL, { 
-                method: "POST", mode: "no-cors", 
-                body: JSON.stringify({ tipo: "pedido", nombre: state.usuarioActual.nombre, telefono: state.usuarioActual.telefono, producto: item.n, categoria: item.cat, precio: item.p, subtotal: item.p }) 
-            }));
-            Promise.all(promesas).then(() => {
-                alert("✅ ¡Pedido enviado correctamente!");
-                state.carrito = [];
-                actualizarCarritoUI();
-                mostrarHistorial();
-            });
-        }
-
-        function mostrarHistorial() {
-            const miHistorial = state.pedidos.filter(p => p.tel == state.usuarioActual.telefono);
-            document.getElementById('historial-cliente').innerHTML = miHistorial.length > 0 
-                ? miHistorial.map(p => `<div class="item-row">${p.prod} - L.${p.total} <br> <span style="font-size:0.7rem; color:blue;">Estado: ${p.estado}</span></div>`).join('')
-                : "<p style='font-size:0.8rem;'>Aún no tienes pedidos.</p>";
-        }
-
-        function toggleAdmin() {
-            if(prompt("Clave de acceso:") === "Glow2026") {
-                document.getElementById('vista-tienda').classList.remove('active');
-                document.getElementById('vista-admin').classList.add('active');
+            if(state.usuarioActual) { 
+                document.getElementById('vista-auth').style.display = 'none'; 
+                visto = false; // Resetear estado al loguear
+                checkNotificaciones(); 
             }
+            else alert("Usuario no encontrado.");
+        }
+
+        function registrar() {
+            const nombre = document.getElementById('reg-nombre').value;
+            const tel = document.getElementById('user-tel').value;
+            fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tipo: "registro", nombre, telefono: tel }) })
+            .then(() => alert("Registrado, ahora puedes ingresar."));
+        }
+
+        function showSection(id, btn) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(btn) btn.classList.add('active');
+        }
+
+        function renderCatalogo() {
+            document.getElementById('lista-productos').innerHTML = state.productos.map(p => `
+                <div class="card">
+                    <img src="${p.imagen}" width="100%">
+                    <h4>${p.nombre}</h4><p>L.${p.precio}</p>
+                    <button class="btn-add" onclick="agregarAlCarrito('${p.nombre}', ${p.precio})">Agregar</button>
+                </div>`).join('');
         }
 
         function renderPedidos() {
-            document.getElementById('lista-pedidos').innerHTML = state.pedidos.map(p => `
-                <div class="item-row">
-                    <b>${p.cliente}</b> (${p.tel}) - ${p.prod}<br>
-                    Estado: <b>${p.estado}</b> | 
-                    <select onchange="cambiarEstado(${p.index}, this.value)">
-                        <option value="">Cambiar estado...</option>
-                        <option value="Preparando">Preparando</option>
-                        <option value="Por salir">Por salir</option>
-                        <option value="En camino">En camino</option>
-                        <option value="Enviado">Enviado</option>
-                    </select>
-                </div>
-            `).join('');
+            if(!state.usuarioActual) return;
+            const misPedidos = state.pedidos.filter(p => p.tel == state.usuarioActual.telefono);
+            document.getElementById('historial-cliente').innerHTML = misPedidos.map(p => `
+                <div class="card" style="text-align:left; margin-bottom:10px; border-left: 5px solid var(--primary-pink);">
+                    <b>Producto:</b> ${p.prod} <br> <b>Estado:</b> ${p.estado}
+                </div>`).join('');
         }
 
-        function cambiarEstado(index, nuevoEstado) {
-            if(!nuevoEstado) return;
-            fetch(URL + "?action=actualizar&index=" + index + "&estado=" + encodeURIComponent(nuevoEstado))
-            .then(() => alert("Estado actualizado"));
+        function agregarAlCarrito(n, p) {
+            state.carrito.push({ n, p });
+            document.getElementById('contenido-carrito').innerHTML = state.carrito.map(i => `<div>${i.n} - L.${i.p}</div>`).join('');
+            document.getElementById('total-precio').innerText = (state.carrito.reduce((s, i) => s + parseFloat(i.p), 0) + 140).toFixed(2);
         }
 
-        function agregarProducto(e) {
-            e.preventDefault();
-            const btn = e.target.querySelector('button');
-            btn.innerText = "Subiendo...";
+        function enviarPedido() {
+            let total = state.carrito.reduce((s, i) => s + parseFloat(i.p), 0) + 140;
+            let p = state.carrito.map(item => fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tipo: "pedido", nombre: state.usuarioActual.nombre, telefono: state.usuarioActual.telefono, producto: item.n, precio: item.p, subtotal: total }) }));
+            Promise.all(p).then(() => { alert("✅ Pedido enviado!"); state.carrito=[]; document.getElementById('contenido-carrito').innerHTML=""; });
+        }
+
+        function procesarYGuardar() {
+            const file = document.getElementById('file-input').files[0];
             const reader = new FileReader();
-            reader.onloadend = () => {
-                fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ 
-                    nombre: document.getElementById('prod-nombre').value, 
-                    categoria: document.getElementById('prod-categoria').value, 
-                    precio: document.getElementById('prod-precio').value, 
-                    imagen: reader.result 
-                }) })
-                .then(() => { alert("¡Producto publicado!"); location.reload(); });
-            };
-            reader.readAsDataURL(document.getElementById('prod-imagen-file').files[0]);
+            reader.onloadend = function() {
+                fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tipo: "producto", nombre: document.getElementById('new-prod-nombre').value, precio: document.getElementById('new-prod-precio').value, categoria: document.getElementById('new-prod-cat').value, imagen: reader.result }) }).then(() => { alert("✅ Producto guardado"); location.reload(); });
+            }
+            if(file) reader.readAsDataURL(file);
+        }
+
+        async function cambiarEstado(index, nuevo) {
+            await fetch(`${URL}?action=actualizar&index=${index}&estado=${encodeURIComponent(nuevo)}`);
+            visto = false; // Al cambiar el admin un estado, el cliente deberá volver a verlo para quitar la alerta
+            cargarDatos();
+        }
+
+        function toggleAdmin() {
+            if(prompt("Clave:") === "Glow2026") {
+                esAdmin = true;
+                document.getElementById('panel-sidebar').style.display = 'none';
+                document.getElementById('contenedor-principal').style.display = 'none';
+                document.getElementById('seccion-admin').classList.add('active');
+                renderAdmin();
+            }
+        }
+
+        function renderAdmin() {
+            document.getElementById('lista-pedidos-admin').innerHTML = state.pedidos.map((p, i) => `
+                <div class="card" style="text-align:left; margin-top:10px;">
+                    <b>${p.cliente}</b> | ${p.prod} | Estado: <b>${p.estado}</b><br>
+                    <button onclick="cambiarEstado(${i}, 'Preparando')">Prep.</button>
+                    <button onclick="cambiarEstado(${i}, 'En camino')">Camino</button>
+                    <button onclick="cambiarEstado(${i}, 'Enviado')">Enviado</button>
+                </div>`).join('');
         }
     </script>
 </body>
