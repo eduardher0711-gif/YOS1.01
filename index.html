@@ -79,11 +79,16 @@
         const URL = "https://script.google.com/macros/s/AKfycbxrWgVriVDp_ZiBDMmfnlgCHC9qSLFyCJGXo4xkaXChlhbsFPrZei0u0Q1_RLBmpaoq/exec";
         let state = { productos: [], pedidos: [], usuarios: [], carrito: [], usuarioActual: null };
         let esAdmin = false;
-        let visto = false; // Variable para controlar si el usuario ya vio la notificación
 
         async function cargarDatos() {
             const res = await fetch(URL);
             const d = await res.json();
+            
+            // Si el estado de los pedidos cambió respecto a lo guardado, marcamos como "no visto"
+            const guardado = JSON.parse(localStorage.getItem('ultimosPedidos') || "[]");
+            const hayCambios = JSON.stringify(d.pedidos) !== JSON.stringify(guardado);
+            if (hayCambios) localStorage.setItem('visto', 'false');
+            
             state = { ...state, ...d };
             checkNotificaciones();
             renderCatalogo();
@@ -94,13 +99,14 @@
         setInterval(cargarDatos, 5000);
 
         function marcarComoVisto() {
-            visto = true;
+            localStorage.setItem('visto', 'true');
+            localStorage.setItem('ultimosPedidos', JSON.stringify(state.pedidos));
             document.getElementById('notif-badge').style.display = 'none';
             renderPedidos();
         }
 
         function checkNotificaciones() {
-            if(!state.usuarioActual || visto) return;
+            if(!state.usuarioActual || localStorage.getItem('visto') === 'true') return;
             const tieneCambios = state.pedidos.some(p => p.tel == state.usuarioActual.telefono && p.estado !== 'Recibido');
             document.getElementById('notif-badge').style.display = tieneCambios ? 'block' : 'none';
         }
@@ -110,7 +116,6 @@
             state.usuarioActual = state.usuarios.find(u => u.telefono == tel);
             if(state.usuarioActual) { 
                 document.getElementById('vista-auth').style.display = 'none'; 
-                visto = false; // Resetear estado al loguear
                 checkNotificaciones(); 
             }
             else alert("Usuario no encontrado.");
@@ -171,7 +176,7 @@
 
         async function cambiarEstado(index, nuevo) {
             await fetch(`${URL}?action=actualizar&index=${index}&estado=${encodeURIComponent(nuevo)}`);
-            visto = false; // Al cambiar el admin un estado, el cliente deberá volver a verlo para quitar la alerta
+            localStorage.setItem('visto', 'false'); // Al cambiar estado, forzamos notificación al cliente
             cargarDatos();
         }
 
