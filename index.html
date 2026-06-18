@@ -89,7 +89,11 @@
                 state = { ...state, ...d };
                 document.getElementById('btn-login').disabled = false;
                 document.getElementById('status-text').innerText = "✨ Glow House ✨";
-                checkNotificaciones(); renderCatalogo(); renderPedidos();
+                
+                checkNotificaciones(); 
+                renderCatalogo(); 
+                renderPedidos();
+                
                 if(state.usuarioActual) {
                     const user = state.usuarios.find(u => u.telefono == state.usuarioActual.telefono);
                     document.getElementById('info-usuario').innerHTML = `<b>Puntos: ${user ? user.puntos : 0}</b>`;
@@ -98,7 +102,7 @@
             } catch(e) { console.error("Error", e); }
         }
         cargarDatos();
-        setInterval(cargarDatos, 10000);
+        setInterval(cargarDatos, 5000);
 
         function marcarComoVisto() {
             localStorage.setItem('visto', 'true');
@@ -107,8 +111,12 @@
 
         function checkNotificaciones() {
             if(!state.usuarioActual) return;
+            const tienePendientes = state.pedidos.some(p => 
+                String(p.tel).trim() == String(state.usuarioActual.telefono).trim() && 
+                p.estado !== 'Recibido'
+            );
+            
             const visto = localStorage.getItem('visto') === 'true';
-            const tienePendientes = state.pedidos.some(p => String(p.tel).trim() == String(state.usuarioActual.telefono).trim() && p.estado !== 'Recibido');
             document.getElementById('notif-badge').style.display = (tienePendientes && !visto) ? 'block' : 'none';
         }
 
@@ -122,8 +130,8 @@
             state.usuarioActual = state.usuarios.find(u => String(u.telefono).trim() == tel);
             if(state.usuarioActual) { 
                 document.getElementById('vista-auth').style.display = 'none'; 
-                document.getElementById('info-usuario').innerHTML = `<b>Puntos: ${state.usuarioActual.puntos || 0}</b>`;
-                checkNotificaciones(); renderPedidos(); 
+                localStorage.setItem('visto', 'false');
+                cargarDatos();
             } else alert("Usuario no encontrado.");
         }
 
@@ -143,10 +151,6 @@
                 fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify(datos) })
                 .then(() => { 
                     alert("✅ Producto guardado");
-                    document.getElementById('new-prod-nombre').value = "";
-                    document.getElementById('new-prod-precio').value = "";
-                    document.getElementById('new-prod-cat').value = "";
-                    document.getElementById('file-input').value = "";
                     cargarDatos(); 
                 });
             }
