@@ -93,9 +93,8 @@
 
         function cambiarEstado(index) {
             const nuevoEstado = document.getElementById('estado-' + index).value;
-            // Para actualizar, hacemos un fetch especial al script (asegúrate de tener permisos de acceso a la función en el GAS)
-            fetch(URL + "?action=actualizar&index=" + index + "&estado=" + encodeURIComponent(nuevoEstado), { mode: "no-cors" })
-            .then(() => alert("Estado actualizado. Recarga para ver cambios."));
+            fetch(URL + "?action=actualizar&index=" + index + "&estado=" + encodeURIComponent(nuevoEstado))
+            .then(() => alert("✅ Estado actualizado."));
         }
 
         function renderPedidos() {
@@ -139,11 +138,17 @@
         }
 
         function enviarPedido() {
+            if(state.carrito.length === 0) return alert("Carrito vacío");
             let promesas = state.carrito.map(item => fetch(URL, { 
                 method: "POST", mode: "no-cors", 
                 body: JSON.stringify({ tipo: "pedido", nombre: state.usuarioActual.nombre, telefono: state.usuarioActual.telefono, producto: item.n, categoria: item.cat, precio: item.p, subtotal: item.p }) 
             }));
-            Promise.all(promesas).then(() => { alert("✅ Pedido enviado!"); location.reload(); });
+            Promise.all(promesas).then(() => {
+                alert("✅ ¡Pedido enviado correctamente!");
+                state.carrito = [];
+                document.getElementById('contenido-carrito').innerHTML = "";
+                document.getElementById('total-precio').innerText = "0.00";
+            });
         }
         
         function agregarProducto(e) {
@@ -151,7 +156,7 @@
             const reader = new FileReader();
             reader.onloadend = () => {
                 fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ nombre: document.getElementById('prod-nombre').value, categoria: document.getElementById('prod-categoria').value, precio: document.getElementById('prod-precio').value, imagen: reader.result }) })
-                .then(() => alert("Publicado."));
+                .then(() => alert("Producto publicado."));
             };
             reader.readAsDataURL(document.getElementById('prod-imagen-file').files[0]);
         }
