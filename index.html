@@ -34,7 +34,6 @@
     </header>
 
     <div class="container">
-        <!-- VISTA CLIENTE -->
         <div id="vista-cliente" class="section active">
             <div class="tienda-layout">
                 <div class="productos-grid" id="contenedor-productos">Cargando catálogo...</div>
@@ -52,7 +51,6 @@
             </div>
         </div>
 
-        <!-- VISTA ADMIN -->
         <div id="vista-admin" class="section">
             <div class="carrito-box" style="max-width: 400px; margin: auto;">
                 <h3>Panel Administrativo</h3>
@@ -76,7 +74,7 @@
             }
         }
 
-        // Carga optimizada para evitar bloqueos
+        // Carga productos con manejo de errores optimizado
         fetch(URL_GOOGLE_SHEETS)
             .then(res => res.json())
             .then(data => {
@@ -93,8 +91,8 @@
                 `).join('');
             })
             .catch(err => {
-                console.error("Error:", err);
-                document.getElementById('contenedor-productos').innerHTML = "<p>Error al cargar. Asegúrate de que el Apps Script sea público.</p>";
+                console.error("Error al cargar:", err);
+                document.getElementById('contenedor-productos').innerHTML = "<p>Error al cargar el inventario.</p>";
             });
 
         function agregarAlCarrito(nombre, precio) { carrito.push({ nombre, precio }); renderCarrito(); }
