@@ -13,6 +13,7 @@
         .productos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
         .producto-card { border: 1px solid #eee; padding: 10px; border-radius: 8px; text-align: center; }
         .producto-card img { width: 100%; height: 150px; object-fit: cover; }
+        .item-row { border-bottom: 1px solid #ddd; padding: 10px 0; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -40,6 +41,9 @@
             <p><strong>Total: L.<span id="total-precio">0.00</span></strong></p>
             <button class="btn-add" style="background:green;" onclick="enviarPedido()">Confirmar Pedido</button>
         </div>
+        <hr>
+        <h3>Mis Pedidos</h3>
+        <div id="historial-cliente">Cargando...</div>
     </div>
 
     <div id="vista-admin" class="section container">
@@ -49,10 +53,10 @@
             <select id="prod-categoria"><option>Maquillaje</option><option>Estilismo</option><option>Perfumes</option></select><br>
             <input type="number" id="prod-precio" placeholder="Precio" required><br>
             <input type="file" id="prod-imagen-file" accept="image/*" required><br>
-            <button type="submit" class="btn-add">Publicar Producto</button>
+            <button type="submit" class="btn-add">Publicar</button>
         </form>
         <hr>
-        <h3>Pedidos Recibidos</h3>
+        <h3>Gestión de Pedidos</h3>
         <div id="lista-pedidos"></div>
     </div>
 
@@ -66,8 +70,6 @@
             const nombre = document.getElementById('reg-nombre').value;
             const tel = document.getElementById('user-tel').value;
             if(state.usuarios.find(u => u.telefono == tel)) return alert("⚠️ ¡Este número ya está registrado!");
-            if(!nombre || !tel) return alert("Llena nombre y teléfono");
-
             fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tipo: "registro", nombre, telefono: tel }) })
             .then(() => { state.usuarios.push({nombre, telefono: tel}); alert("✅ Registro exitoso."); });
         }
@@ -78,7 +80,38 @@
             if(state.usuarioActual) {
                 document.getElementById('vista-auth').classList.remove('active');
                 document.getElementById('vista-tienda').classList.add('active');
-            } else alert("Usuario no encontrado, regístrate primero.");
+                mostrarHistorial();
+            } else alert("Usuario no encontrado.");
+        }
+
+        function mostrarHistorial() {
+            const miHistorial = state.pedidos.filter(p => p.tel == state.usuarioActual.telefono);
+            document.getElementById('historial-cliente').innerHTML = miHistorial.length > 0 
+                ? miHistorial.map(p => `<div class="item-row">${p.prod} - Total: L.${p.total} | <b>Estado: ${p.estado}</b></div>`).join('')
+                : "<p>No tienes pedidos.</p>";
+        }
+
+        function cambiarEstado(index) {
+            const nuevoEstado = document.getElementById('estado-' + index).value;
+            // Para actualizar, hacemos un fetch especial al script (asegúrate de tener permisos de acceso a la función en el GAS)
+            fetch(URL + "?action=actualizar&index=" + index + "&estado=" + encodeURIComponent(nuevoEstado), { mode: "no-cors" })
+            .then(() => alert("Estado actualizado. Recarga para ver cambios."));
+        }
+
+        function renderPedidos() {
+            document.getElementById('lista-pedidos').innerHTML = state.pedidos.map(p => `
+                <div class="item-row">
+                    <b>${p.cliente}</b> - ${p.prod} (L.${p.total})<br>
+                    Estado actual: ${p.estado}<br>
+                    <select id="estado-${p.index}">
+                        <option value="Preparando">Preparando</option>
+                        <option value="Por salir">Por salir</option>
+                        <option value="En camino">En camino</option>
+                        <option value="Enviado">Enviado</option>
+                    </select>
+                    <button onclick="cambiarEstado(${p.index})">Actualizar</button>
+                </div>
+            `).join('');
         }
 
         function toggleAdmin() {
@@ -106,21 +139,11 @@
         }
 
         function enviarPedido() {
-            if(state.carrito.length === 0) return alert("Carrito vacío");
             let promesas = state.carrito.map(item => fetch(URL, { 
                 method: "POST", mode: "no-cors", 
-                body: JSON.stringify({ tipo: "pedido", nombre: state.usuarioActual.nombre, telefono: state.usuarioActual.telefono, direccion: "N/A", producto: item.n, categoria: item.cat, precio: item.p, cantidad: 1, subtotal: item.p }) 
+                body: JSON.stringify({ tipo: "pedido", nombre: state.usuarioActual.nombre, telefono: state.usuarioActual.telefono, producto: item.n, categoria: item.cat, precio: item.p, subtotal: item.p }) 
             }));
-            Promise.all(promesas).then(() => {
-                alert("✅ ¡Pedido enviado correctamente!");
-                state.carrito = [];
-                document.getElementById('contenido-carrito').innerHTML = "";
-                document.getElementById('total-precio').innerText = "0.00";
-            });
-        }
-
-        function renderPedidos() {
-            document.getElementById('lista-pedidos').innerHTML = state.pedidos.map(p => `<div>${p.cliente} (${p.tel}) - ${p.prod} - L.${p.total}</div>`).join('');
+            Promise.all(promesas).then(() => { alert("✅ Pedido enviado!"); location.reload(); });
         }
         
         function agregarProducto(e) {
@@ -128,7 +151,7 @@
             const reader = new FileReader();
             reader.onloadend = () => {
                 fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ nombre: document.getElementById('prod-nombre').value, categoria: document.getElementById('prod-categoria').value, precio: document.getElementById('prod-precio').value, imagen: reader.result }) })
-                .then(() => alert("Producto publicado. Recarga para ver cambios."));
+                .then(() => alert("Publicado."));
             };
             reader.readAsDataURL(document.getElementById('prod-imagen-file').files[0]);
         }
