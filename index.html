@@ -68,8 +68,10 @@
         <input id="new-prod-precio" placeholder="Precio">
         <input id="new-prod-cat" placeholder="Categoría">
         <label>Imagen:</label>
-        <input type="file" id="file-input" accept="image/*">
-        <button class="btn-add" onclick="procesarYGuardar()">Guardar Producto</button>
+        <input type="file" id="file-input" accept="image/*" onchange="previsualizarImagen(this)">
+        <div id="preview-container" style="margin:8px 0; display:none;"><img id="preview-img" style="max-width:150px; border-radius:8px; border:1px solid #ddd;"></div>
+        <div id="upload-status" style="font-size:0.85em; color:#999; margin:4px 0;"></div>
+        <button class="btn-add" id="btn-guardar" onclick="procesarYGuardar()">Guardar Producto</button>
         <hr>
         <h3>Pedidos Pendientes</h3>
         <div id="lista-pedidos-admin"></div>
@@ -112,14 +114,67 @@
             fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tipo: "registro", nombre, telefono: tel }) })
             .then(() => alert("Registrado."));
         }
-        function procesarYGuardar() {
-            const file = document.getElementById('file-input').files[0];
+        const IMGBB_KEY = "717c84c625105ef28f0d0308d5939d99";
+
+        function previsualizarImagen(input) {
+            const file = input.files[0];
+            if (!file) return;
             const reader = new FileReader();
-            reader.onloadend = function() {
-                const datos = { tipo: "producto", nombre: document.getElementById('new-prod-nombre').value, precio: document.getElementById('new-prod-precio').value, imagen: reader.result };
-                fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify(datos) }).then(() => { alert("Guardado"); cargarDatos(); });
-            }
+            reader.onload = function(e) {
+                document.getElementById('preview-img').src = e.target.result;
+                document.getElementById('preview-container').style.display = 'block';
+            };
             reader.readAsDataURL(file);
+        }
+
+        async function procesarYGuardar() {
+            const file = document.getElementById('file-input').files[0];
+            if (!file) { alert("Selecciona una imagen."); return; }
+            const nombre = document.getElementById('new-prod-nombre').value.trim();
+            const precio = document.getElementById('new-prod-precio').value.trim();
+            if (!nombre || !precio) { alert("Completa el nombre y precio."); return; }
+
+            const btnGuardar = document.getElementById('btn-guardar');
+            const status = document.getElementById('upload-status');
+            btnGuardar.disabled = true;
+            status.innerText = "⏳ Subiendo imagen...";
+
+            try {
+                const reader = new FileReader();
+                reader.onloadend = async function() {
+                    const base64 = reader.result.split(',')[1];
+                    const formData = new FormData();
+                    formData.append('key', IMGBB_KEY);
+                    formData.append('image', base64);
+
+                    const res = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
+                    const json = await res.json();
+
+                    if (json.success) {
+                        const imagenUrl = json.data.url;
+                        status.innerText = "✅ Imagen subida. Guardando producto...";
+                        const datos = { tipo: "producto", nombre, precio, imagen: imagenUrl };
+                        fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify(datos) })
+                        .then(() => {
+                            alert("Producto guardado.");
+                            document.getElementById('new-prod-nombre').value = '';
+                            document.getElementById('new-prod-precio').value = '';
+                            document.getElementById('file-input').value = '';
+                            document.getElementById('preview-container').style.display = 'none';
+                            status.innerText = '';
+                            btnGuardar.disabled = false;
+                            cargarDatos();
+                        });
+                    } else {
+                        status.innerText = "❌ Error al subir imagen. Intenta de nuevo.";
+                        btnGuardar.disabled = false;
+                    }
+                };
+                reader.readAsDataURL(file);
+            } catch(e) {
+                status.innerText = "❌ Error de conexión. Intenta de nuevo.";
+                btnGuardar.disabled = false;
+            }
         }
         function renderCatalogo() {
             document.getElementById('lista-productos').innerHTML = state.productos.map(p => `
