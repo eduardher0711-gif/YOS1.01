@@ -6,35 +6,26 @@
     <style>
         :root { --primary-pink: #fd79a8; --dark-pink: #e84393; --bg: #fff5f7; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
-        
         #modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
         #modal img { max-width: 90%; max-height: 90%; border-radius: 10px; }
-
         #vista-auth { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg); z-index:100; display: flex; justify-content:center; align-items:center; }
         .box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
         .sidebar { width: 250px; background: #fff; border-right: 1px solid #ddd; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .nav-btn { background: none; border: none; padding: 15px; text-align: left; cursor: pointer; font-weight: bold; border-radius: 8px; transition: 0.3s; position: relative; }
+        .nav-btn { background: none; border: none; padding: 15px; text-align: left; cursor: pointer; font-weight: bold; border-radius: 8px; transition: 0.3s; }
         .nav-btn:hover, .nav-btn.active { background: var(--primary-pink); color: white; }
-        .badge { background: red; color: white; font-size: 10px; padding: 2px 6px; border-radius: 50%; position: absolute; top: 5px; right: 5px; display: none; }
         .main-content { flex: 1; padding: 30px; overflow-y: auto; }
         .section { display: none; } .section.active { display: block; }
-        
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
         .card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .img-container { width: 100%; height: 180px; overflow: hidden; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
-        .img-container img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
-        
+        .img-container { width: 100%; height: 180px; overflow: hidden; border-radius: 8px; cursor: pointer; margin-bottom: 10px; background: #fdfdfd; display: flex; align-items: center; justify-content: center; }
+        .img-container img { width: 100%; height: 100%; object-fit: cover; }
         .btn-add { background: var(--dark-pink); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 5px; }
         .btn-add:disabled { background: #ccc; cursor: not-allowed; }
         input { padding: 8px; margin: 5px 0; width: 90%; border: 1px solid #ccc; border-radius: 5px; }
     </style>
 </head>
 <body>
-
-    <div id="modal" onclick="this.style.display='none'">
-        <img id="modal-img" src="">
-    </div>
-
+    <div id="modal" onclick="this.style.display='none'"><img id="modal-img" src=""></div>
     <div id="vista-auth" class="section active">
         <div class="box">
             <h2 id="status-text">✨ Cargando Glow House... ✨</h2>
@@ -44,18 +35,14 @@
             <button class="btn-add" style="background:#6c5ce7;" onclick="registrar()">REGISTRARME</button>
         </div>
     </div>
-
     <div id="panel-sidebar" class="sidebar">
         <h2>Glow House</h2>
         <div id="info-usuario" style="font-size: 0.9em; margin-bottom: 10px;"></div>
         <button class="nav-btn active" onclick="showSection('seccion-catalogo', this)">🛍️ Catálogo</button>
-        <button class="nav-btn" id="btn-pedidos" onclick="marcarComoVisto(); showSection('seccion-pedidos', this)">
-            📦 Mis Pedidos <span id="notif-badge" class="badge">!</span>
-        </button>
+        <button class="nav-btn" onclick="showSection('seccion-pedidos', this)">📦 Mis Pedidos</button>
         <hr style="width:100%">
         <button class="nav-btn" onclick="toggleAdmin()">⚙️ Panel Admin</button>
     </div>
-
     <div id="contenedor-principal" class="main-content">
         <div id="seccion-catalogo" class="section active">
             <h3>Catálogo de Productos</h3>
@@ -72,7 +59,6 @@
             <div id="historial-cliente"></div>
         </div>
     </div>
-
     <div id="seccion-admin" class="section" style="padding: 30px;">
         <h2>Panel Administrativo</h2>
         <button onclick="location.reload()">⬅️ Salir</button>
@@ -88,7 +74,6 @@
         <h3>Pedidos Pendientes</h3>
         <div id="lista-pedidos-admin"></div>
     </div>
-
     <script>
         const URL = "https://script.google.com/macros/s/AKfycbxrWgVriVDp_ZiBDMmfnlgCHC9qSLFyCJGXo4xkaXChlhbsFPrZei0u0Q1_RLBmpaoq/exec";
         let state = { productos: [], pedidos: [], usuarios: [], carrito: [], usuarioActual: null };
@@ -96,12 +81,13 @@
 
         async function cargarDatos() {
             try {
+                const btnLogin = document.getElementById('btn-login');
                 const res = await fetch(URL);
                 const d = await res.json();
                 state = { ...state, ...d };
-                document.getElementById('btn-login').disabled = false;
+                if(btnLogin) btnLogin.disabled = false;
                 document.getElementById('status-text').innerText = "✨ Glow House ✨";
-                checkNotificaciones(); renderCatalogo(); renderPedidos();
+                renderCatalogo(); renderPedidos();
                 if(state.usuarioActual) {
                     const user = state.usuarios.find(u => u.telefono == state.usuarioActual.telefono);
                     document.getElementById('info-usuario').innerHTML = `<b>Puntos: ${user ? user.puntos : 0}</b>`;
@@ -109,138 +95,47 @@
                 if(esAdmin) renderAdmin();
             } catch(e) { console.error("Error", e); }
         }
+        
         cargarDatos();
-        setInterval(cargarDatos, 10000);
+        setInterval(cargarDatos, 5000); // Actualización automática
 
-        function marcarComoVisto() {
-            localStorage.setItem('visto', 'true');
-            document.getElementById('notif-badge').style.display = 'none';
-        }
-
-        function checkNotificaciones() {
-            if(!state.usuarioActual) return;
-            const visto = localStorage.getItem('visto') === 'true';
-            const tienePendientes = state.pedidos.some(p => String(p.tel).trim() == String(state.usuarioActual.telefono).trim() && p.estado !== 'Recibido');
-            document.getElementById('notif-badge').style.display = (tienePendientes && !visto) ? 'block' : 'none';
-        }
-
-        function abrirImagen(src) {
-            document.getElementById('modal-img').src = src;
-            document.getElementById('modal').style.display = 'flex';
-        }
-
+        function abrirImagen(src) { document.getElementById('modal-img').src = src; document.getElementById('modal').style.display = 'flex'; }
         function login() {
             const tel = document.getElementById('user-tel').value.trim();
             state.usuarioActual = state.usuarios.find(u => String(u.telefono).trim() == tel);
-            if(state.usuarioActual) { 
-                document.getElementById('vista-auth').style.display = 'none'; 
-                document.getElementById('info-usuario').innerHTML = `<b>Puntos: ${state.usuarioActual.puntos || 0}</b>`;
-                checkNotificaciones(); renderPedidos(); 
-            } else alert("Usuario no encontrado.");
+            if(state.usuarioActual) { document.getElementById('vista-auth').style.display = 'none'; cargarDatos(); }
+            else alert("Usuario no encontrado.");
         }
-
         function registrar() {
             const nombre = document.getElementById('reg-nombre').value;
             const tel = document.getElementById('user-tel').value;
             fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tipo: "registro", nombre, telefono: tel }) })
-            .then(() => alert("Registrado, ahora puedes ingresar."));
+            .then(() => alert("Registrado."));
         }
-
         function procesarYGuardar() {
             const file = document.getElementById('file-input').files[0];
-            if (!file) { alert("Selecciona una imagen"); return; }
             const reader = new FileReader();
             reader.onloadend = function() {
-                const datos = { tipo: "producto", nombre: document.getElementById('new-prod-nombre').value, precio: document.getElementById('new-prod-precio').value, categoria: document.getElementById('new-prod-cat').value, imagen: reader.result };
-                fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify(datos) })
-                .then(() => { 
-                    alert("✅ Producto guardado");
-                    document.getElementById('new-prod-nombre').value = "";
-                    document.getElementById('new-prod-precio').value = "";
-                    document.getElementById('new-prod-cat').value = "";
-                    document.getElementById('file-input').value = "";
-                    cargarDatos(); 
-                });
+                const datos = { tipo: "producto", nombre: document.getElementById('new-prod-nombre').value, precio: document.getElementById('new-prod-precio').value, imagen: reader.result };
+                fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify(datos) }).then(() => { alert("Guardado"); cargarDatos(); });
             }
             reader.readAsDataURL(file);
         }
-
         function renderCatalogo() {
             document.getElementById('lista-productos').innerHTML = state.productos.map(p => `
-                <div class="card">
-                    <div class="img-container" onclick="abrirImagen('${p.imagen}')"><img src="${p.imagen}"></div>
-                    <h4>${p.nombre}</h4><p>L.${p.precio}</p>
-                    <button class="btn-add" onclick="agregarAlCarrito('${p.nombre}', ${p.precio})">Agregar</button>
-                </div>`).join('');
+                <div class="card"><div class="img-container" onclick="abrirImagen('${p.imagen}')"><img src="${p.imagen}"></div>
+                <h4>${p.nombre}</h4><p>L.${p.precio}</p><button class="btn-add" onclick="agregarAlCarrito('${p.nombre}', ${p.precio})">Agregar</button></div>`).join('');
         }
-
-        function agregarAlCarrito(n, p) {
-            state.carrito.push({ n, p });
-            document.getElementById('contenido-carrito').innerHTML = state.carrito.map(i => `<div>${i.n} - L.${i.p}</div>`).join('');
-            document.getElementById('total-precio').innerText = (state.carrito.reduce((s, i) => s + parseFloat(i.p), 0) + 140).toFixed(2);
-        }
-
+        function agregarAlCarrito(n, p) { state.carrito.push({ n, p }); document.getElementById('contenido-carrito').innerHTML = state.carrito.map(i => `<div>${i.n} - L.${i.p}</div>`).join(''); document.getElementById('total-precio').innerText = (state.carrito.reduce((s, i) => s + parseFloat(i.p), 0) + 140).toFixed(2); }
         function enviarPedido() {
-            if (state.carrito.length === 0) { alert("El carrito está vacío."); return; }
-            const totalCompra = state.carrito.reduce((s, i) => s + parseFloat(i.p), 0);
-            const puntosGanados = Math.floor(totalCompra * 0.005);
-            const datosPedido = { 
-                tipo: "pedido", 
-                nombre: state.usuarioActual.nombre, 
-                telefono: state.usuarioActual.telefono, 
-                carrito: state.carrito,
-                fecha: new Date().toLocaleString(),
-                totalCompra: totalCompra
-            };
-            fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify(datosPedido) }).then(() => { 
-                alert("✅ Pedido enviado! Acumulaste " + puntosGanados + " puntos."); 
-                state.carrito=[]; 
-                document.getElementById('contenido-carrito').innerHTML=""; 
-                document.getElementById('total-precio').innerText="0.00";
-                cargarDatos();
-            });
+            const datosPedido = { tipo: "pedido", nombre: state.usuarioActual.nombre, telefono: state.usuarioActual.telefono, carrito: state.carrito, fecha: new Date().toLocaleString(), totalCompra: state.carrito.reduce((s, i) => s + parseFloat(i.p), 0) };
+            fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify(datosPedido) }).then(() => { alert("Enviado!"); state.carrito=[]; document.getElementById('contenido-carrito').innerHTML=""; cargarDatos(); });
         }
-
-        function renderPedidos() {
-            if(!state.usuarioActual) return;
-            const misPedidos = state.pedidos.filter(p => String(p.tel).trim() == String(state.usuarioActual.telefono).trim());
-            document.getElementById('historial-cliente').innerHTML = misPedidos.map(p => `
-                <div class="card" style="text-align:left; margin-bottom:10px; border-left: 5px solid var(--primary-pink);">
-                    <b>Fecha:</b> ${p.fecha || 'N/A'} <br> <b>Producto:</b> ${p.prod} <br> <b>Estado:</b> ${p.estado}
-                </div>`).join('');
-        }
-
-        function showSection(id, btn) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(btn) btn.classList.add('active');
-        }
-
-        function toggleAdmin() {
-            if(prompt("Clave:") === "Glow2026") {
-                esAdmin = true;
-                document.getElementById('panel-sidebar').style.display = 'none';
-                document.getElementById('contenedor-principal').style.display = 'none';
-                document.getElementById('seccion-admin').classList.add('active');
-                renderAdmin();
-            }
-        }
-
-        function renderAdmin() {
-            document.getElementById('lista-pedidos-admin').innerHTML = state.pedidos.map((p, i) => `
-                <div class="card" style="text-align:left; margin-top:10px;">
-                    <b>${p.cliente}</b> | ${p.prod} | Estado: <b>${p.estado}</b><br>
-                    <button onclick="cambiarEstado(${i}, 'Preparando')">Prep.</button>
-                    <button onclick="cambiarEstado(${i}, 'En camino')">Camino</button>
-                    <button onclick="cambiarEstado(${i}, 'Enviado')">Enviado</button>
-                </div>`).join('');
-        }
-
-        async function cambiarEstado(index, nuevo) {
-            await fetch(`${URL}?action=actualizar&index=${index}&estado=${encodeURIComponent(nuevo)}`);
-            cargarDatos();
-        }
+        function renderPedidos() { if(!state.usuarioActual) return; document.getElementById('historial-cliente').innerHTML = state.pedidos.filter(p => String(p.tel).trim() == String(state.usuarioActual.telefono).trim()).map(p => `<div class="card" style="text-align:left;"><b>Producto:</b> ${p.prod} <br> <b>Estado:</b> ${p.estado}</div>`).join(''); }
+        function showSection(id, btn) { document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('active'); if(btn) btn.classList.add('active'); }
+        function toggleAdmin() { if(prompt("Clave:") === "Glow2026") { esAdmin = true; document.getElementById('panel-sidebar').style.display = 'none'; document.getElementById('contenedor-principal').style.display = 'none'; document.getElementById('seccion-admin').classList.add('active'); renderAdmin(); } }
+        function renderAdmin() { document.getElementById('lista-pedidos-admin').innerHTML = state.pedidos.map((p, i) => `<div class="card" style="text-align:left;"><b>${p.cliente}</b> | ${p.prod} | Estado: <b>${p.estado}</b><br><button onclick="cambiarEstado(${i}, 'Preparando')">Prep.</button><button onclick="cambiarEstado(${i}, 'Enviado')">Enviado</button></div>`).join(''); }
+        async function cambiarEstado(index, nuevo) { await fetch(`${URL}?action=actualizar&index=${index}&estado=${encodeURIComponent(nuevo)}`); cargarDatos(); }
     </script>
 </body>
 </html>
