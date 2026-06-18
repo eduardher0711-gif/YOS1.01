@@ -7,16 +7,20 @@
     <style>
         :root { --soft-pink: #fce4ec; --dark-pink: #ec407a; --accent: #d81b60; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #fafafa; color: #333; margin: 0; }
+        
         header { background: linear-gradient(135deg, #f8bbd0, #fce4ec); padding: 2rem; text-align: center; border-bottom: 5px solid var(--dark-pink); position: relative; }
         header h1 { color: var(--accent); margin: 0; cursor: pointer; }
         .admin-btn { position: absolute; top: 10px; right: 10px; background: none; border: 1px solid var(--dark-pink); border-radius: 5px; cursor: pointer; padding: 5px; }
+        
         .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
         .section { display: none; } .section.active { display: block; }
         .tienda-layout { display: grid; grid-template-columns: 1fr 350px; gap: 2rem; }
+        
         .productos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
         .producto-card { background: white; padding: 1rem; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-align: center; }
-        .producto-card img { width: 100%; height: 200px; object-fit: cover; border-radius: 15px; }
+        .producto-card img { width: 100%; height: 200px; object-fit: cover; border-radius: 15px; background-color: #eee; }
         .btn-add { background: var(--dark-pink); color: white; border: none; padding: 0.8rem; width: 100%; border-radius: 10px; cursor: pointer; margin-top: 10px; }
+        
         .carrito-box { background: white; padding: 1.5rem; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
         .item-carrito { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #ddd; }
         .btn-remove { background: #ff7675; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; }
@@ -30,6 +34,7 @@
     </header>
 
     <div class="container">
+        <!-- VISTA CLIENTE -->
         <div id="vista-cliente" class="section active">
             <div class="tienda-layout">
                 <div class="productos-grid" id="contenedor-productos">Cargando catálogo...</div>
@@ -47,6 +52,7 @@
             </div>
         </div>
 
+        <!-- VISTA ADMIN -->
         <div id="vista-admin" class="section">
             <div class="carrito-box" style="max-width: 400px; margin: auto;">
                 <h3>Panel Administrativo</h3>
@@ -70,16 +76,26 @@
             }
         }
 
-        fetch(URL_GOOGLE_SHEETS).then(res => res.json()).then(data => {
-            document.getElementById('contenedor-productos').innerHTML = data.map(p => `
-                <div class="producto-card">
-                    <img src="${p.imagen}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">
-                    <h4>${p.nombre}</h4>
-                    <p style="color:var(--dark-pink); font-weight:bold;">L. ${parseFloat(p.precio).toFixed(2)}</p>
-                    <button class="btn-add" onclick="agregarAlCarrito('${p.nombre}', ${p.precio})">Agregar</button>
-                </div>
-            `).join('');
-        });
+        // Carga optimizada para evitar bloqueos
+        fetch(URL_GOOGLE_SHEETS)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('contenedor-productos').innerHTML = data.map(p => `
+                    <div class="producto-card">
+                        <img src="${p.imagen}" 
+                             loading="lazy" 
+                             referrerpolicy="no-referrer" 
+                             onerror="this.src='https://via.placeholder.com/200?text=Sin+Imagen'; this.onerror=null;">
+                        <h4>${p.nombre}</h4>
+                        <p style="color:var(--dark-pink); font-weight:bold;">L. ${parseFloat(p.precio).toFixed(2)}</p>
+                        <button class="btn-add" onclick="agregarAlCarrito('${p.nombre}', ${p.precio})">Agregar</button>
+                    </div>
+                `).join('');
+            })
+            .catch(err => {
+                console.error("Error:", err);
+                document.getElementById('contenedor-productos').innerHTML = "<p>Error al cargar. Asegúrate de que el Apps Script sea público.</p>";
+            });
 
         function agregarAlCarrito(nombre, precio) { carrito.push({ nombre, precio }); renderCarrito(); }
 
@@ -120,7 +136,10 @@
                 imagen: document.getElementById('prod-imagen').value
             };
             fetch(URL_GOOGLE_SHEETS, { method: "POST", mode: "no-cors", body: JSON.stringify(data) })
-                .then(() => { alert("✅ ¡Producto agregado correctamente!"); location.reload(); });
+                .then(() => { 
+                    alert("✅ ¡Producto agregado correctamente!"); 
+                    location.reload(); 
+                });
         }
     </script>
 </body>
