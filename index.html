@@ -2,133 +2,135 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Glow House by Yoss</title>
     <style>
         :root { --primary-pink: #fd79a8; --dark-pink: #e84393; --soft-bg: #fff5f7; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--soft-bg); }
-        header { background: white; padding: 1.2rem 2rem; display: flex; justify-content: space-between; border-bottom: 3px solid var(--primary-pink); }
-        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
         .section { display: none; } .section.active { display: block; }
-        .productos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
-        .producto-card { background: white; padding: 1rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
-        .producto-card img { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; }
-        .btn-add { background: var(--dark-pink); color: white; border: none; padding: 0.7rem; width: 100%; border-radius: 8px; cursor: pointer; }
-        .carrito-container { background: white; padding: 1.5rem; border-radius: 12px; height: fit-content; border: 1px solid #ffe3e8; }
-        .form-pedido { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
-        input { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 1rem; background: white; border-radius: 12px; }
+        .box { max-width: 400px; margin: auto; text-align: center; }
+        .btn-add { background: var(--dark-pink); color: white; border: none; padding: 0.7rem; width: 100%; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+        .productos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+        .producto-card { border: 1px solid #eee; padding: 10px; border-radius: 8px; text-align: center; }
+        .producto-card img { width: 100%; height: 150px; object-fit: cover; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Glow House <span>by Yoss</span></h1>
-        <button onclick="toggleVista()" id="btn-nav">Panel Admin</button>
-    </header>
-
-    <div class="container">
-        <div id="vista-cliente" class="section active">
-            <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 2rem;">
-                <div class="productos-grid" id="contenedor-productos">Cargando...</div>
-                <div class="carrito-container">
-                    <h3>Carrito 🛒</h3>
-                    <div id="contenido-carrito"><p>Vacío.</p></div>
-                    <p><strong>Total: L. <span id="total-precio">0.00</span></strong></p>
-                    <div class="form-pedido">
-                        <input type="text" id="nombre-cliente" placeholder="Nombre" required>
-                        <input type="tel" id="telefono-cliente" placeholder="Teléfono" required>
-                        <input type="text" id="dir-cliente" placeholder="Dirección" required>
-                        <button class="btn-add" onclick="enviarPedido()" style="background: green;">Confirmar Pedido</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="vista-admin" class="section">
-            <div style="max-width: 400px; margin: auto;">
-                <form id="form-producto" onsubmit="agregarProducto(event)">
-                    <input type="text" id="prod-nombre" placeholder="Nombre" required><br><br>
-                    <select id="prod-categoria">
-                        <option value="Maquillaje">Maquillaje</option>
-                        <option value="Estilismo">Estilismo</option>
-                        <option value="Perfumes">Perfumes</option>
-                    </select><br><br>
-                    <input type="number" id="prod-precio" placeholder="Precio" required><br><br>
-                    <input type="file" id="prod-imagen-file" accept="image/*" required><br><br>
-                    <button type="submit" class="btn-add">Publicar</button>
-                </form>
-            </div>
+    <div id="vista-auth" class="section active container">
+        <div class="box">
+            <h3>Bienvenido a Glow House</h3>
+            <input type="text" id="reg-nombre" placeholder="Nombre (nuevo ingreso)"><br><br>
+            <input type="tel" id="user-tel" placeholder="Número de teléfono"><br><br>
+            <button class="btn-add" onclick="login()">Ingresar</button>
+            <button class="btn-add" style="background:#6c5ce7;" onclick="registrar()">Registrarse</button>
         </div>
     </div>
 
-    <script>
-        const URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbxrWgVriVDp_ZiBDMmfnlgCHC9qSLFyCJGXo4xkaXChlhbsFPrZei0u0Q1_RLBmpaoq/exec";
-        let inventario = [];
-        let carrito = [];
+    <div id="vista-tienda" class="section container">
+        <header style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>Glow House by Yoss</h1>
+            <button onclick="toggleAdmin()">Panel Admin</button>
+        </header>
+        <div class="productos-grid" id="contenedor-productos"></div>
+        <hr>
+        <div id="carrito-seccion">
+            <h3>Carrito 🛒</h3>
+            <div id="contenido-carrito"></div>
+            <p><strong>Total: L.<span id="total-precio">0.00</span></strong></p>
+            <button class="btn-add" style="background:green;" onclick="enviarPedido()">Confirmar Pedido</button>
+        </div>
+    </div>
 
-        fetch(URL_GOOGLE_SHEETS).then(res => res.json()).then(data => { inventario = data; renderTienda(); });
+    <div id="vista-admin" class="section container">
+        <h3>Panel Admin</h3>
+        <form id="form-producto" onsubmit="agregarProducto(event)">
+            <input type="text" id="prod-nombre" placeholder="Nombre" required><br>
+            <select id="prod-categoria"><option>Maquillaje</option><option>Estilismo</option><option>Perfumes</option></select><br>
+            <input type="number" id="prod-precio" placeholder="Precio" required><br>
+            <input type="file" id="prod-imagen-file" accept="image/*" required><br>
+            <button type="submit" class="btn-add">Publicar Producto</button>
+        </form>
+        <hr>
+        <h3>Pedidos Recibidos</h3>
+        <div id="lista-pedidos"></div>
+    </div>
+
+    <script>
+        const URL = "https://script.google.com/macros/s/AKfycbxrWgVriVDp_ZiBDMmfnlgCHC9qSLFyCJGXo4xkaXChlhbsFPrZei0u0Q1_RLBmpaoq/exec";
+        let state = { productos: [], pedidos: [], usuarios: [], carrito: [], usuarioActual: null };
+
+        fetch(URL).then(r => r.json()).then(d => { state = { ...state, ...d }; renderTienda(); renderPedidos(); });
+
+        function registrar() {
+            const nombre = document.getElementById('reg-nombre').value;
+            const tel = document.getElementById('user-tel').value;
+            if(state.usuarios.find(u => u.telefono == tel)) return alert("⚠️ ¡Este número ya está registrado!");
+            if(!nombre || !tel) return alert("Llena nombre y teléfono");
+
+            fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tipo: "registro", nombre, telefono: tel }) })
+            .then(() => { state.usuarios.push({nombre, telefono: tel}); alert("✅ Registro exitoso."); });
+        }
+
+        function login() {
+            const tel = document.getElementById('user-tel').value;
+            state.usuarioActual = state.usuarios.find(u => u.telefono == tel);
+            if(state.usuarioActual) {
+                document.getElementById('vista-auth').classList.remove('active');
+                document.getElementById('vista-tienda').classList.add('active');
+            } else alert("Usuario no encontrado, regístrate primero.");
+        }
+
+        function toggleAdmin() {
+            if(prompt("Contraseña:") === "Glow2026") {
+                document.getElementById('vista-tienda').classList.remove('active');
+                document.getElementById('vista-admin').classList.add('active');
+            }
+        }
 
         function renderTienda() {
-            document.getElementById('contenedor-productos').innerHTML = inventario.map(p => `
+            document.getElementById('contenedor-productos').innerHTML = state.productos.map(p => `
                 <div class="producto-card">
-                    <img src="${p.imagen}" onerror="this.src='https://via.placeholder.com/150'">
-                    <h4>${p.nombre}</h4>
-                    <p>L. ${p.precio}</p>
+                    <img src="${p.imagen}">
+                    <h4>${p.nombre}</h4><p>L.${p.precio}</p>
                     <button class="btn-add" onclick="agregarAlCarrito('${p.nombre}', ${p.precio}, '${p.categoria}')">Agregar</button>
                 </div>
             `).join('');
         }
 
         function agregarAlCarrito(n, p, cat) {
-            carrito.push({ n, p, cat, cantidad: 1 });
-            let total = carrito.reduce((sum, i) => sum + parseFloat(i.p), 0);
-            document.getElementById('contenido-carrito').innerHTML = carrito.map(i => `<div>${i.n} - L.${i.p}</div>`).join('');
+            state.carrito.push({ n, p, cat });
+            let total = state.carrito.reduce((s, i) => s + i.p, 0);
+            document.getElementById('contenido-carrito').innerHTML = state.carrito.map(i => `<div>${i.n} - L.${i.p}</div>`).join('');
             document.getElementById('total-precio').innerText = total.toFixed(2);
         }
 
         function enviarPedido() {
-            const nombre = document.getElementById('nombre-cliente').value;
-            const tel = document.getElementById('telefono-cliente').value;
-            const dir = document.getElementById('dir-cliente').value;
-            
-            if(!nombre || carrito.length === 0) return alert("Completa los datos y agrega productos");
-
-            carrito.forEach(item => {
-                fetch(URL_GOOGLE_SHEETS, {
-                    method: "POST", mode: "no-cors", headers: {"Content-Type":"application/json"},
-                    body: JSON.stringify({
-                        tipo: "pedido",
-                        nombre, telefono: tel, direccion: dir,
-                        producto: item.n, categoria: item.cat,
-                        precio: item.p, cantidad: item.cantidad,
-                        subtotal: item.p
-                    })
-                });
+            if(state.carrito.length === 0) return alert("Carrito vacío");
+            let promesas = state.carrito.map(item => fetch(URL, { 
+                method: "POST", mode: "no-cors", 
+                body: JSON.stringify({ tipo: "pedido", nombre: state.usuarioActual.nombre, telefono: state.usuarioActual.telefono, direccion: "N/A", producto: item.n, categoria: item.cat, precio: item.p, cantidad: 1, subtotal: item.p }) 
+            }));
+            Promise.all(promesas).then(() => {
+                alert("✅ ¡Pedido enviado correctamente!");
+                state.carrito = [];
+                document.getElementById('contenido-carrito').innerHTML = "";
+                document.getElementById('total-precio').innerText = "0.00";
             });
-            alert("¡Pedido enviado a la hoja!");
-            location.reload();
         }
 
+        function renderPedidos() {
+            document.getElementById('lista-pedidos').innerHTML = state.pedidos.map(p => `<div>${p.cliente} (${p.tel}) - ${p.prod} - L.${p.total}</div>`).join('');
+        }
+        
         function agregarProducto(e) {
             e.preventDefault();
             const reader = new FileReader();
-            reader.onloadend = function() {
-                fetch(URL_GOOGLE_SHEETS, {
-                    method: "POST", mode: "no-cors", headers:{"Content-Type":"application/json"},
-                    body: JSON.stringify({
-                        nombre: document.getElementById('prod-nombre').value,
-                        categoria: document.getElementById('prod-categoria').value,
-                        precio: document.getElementById('prod-precio').value,
-                        imagen: reader.result
-                    })
-                }).then(() => { alert("Publicado!"); location.reload(); });
+            reader.onloadend = () => {
+                fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ nombre: document.getElementById('prod-nombre').value, categoria: document.getElementById('prod-categoria').value, precio: document.getElementById('prod-precio').value, imagen: reader.result }) })
+                .then(() => alert("Producto publicado. Recarga para ver cambios."));
             };
             reader.readAsDataURL(document.getElementById('prod-imagen-file').files[0]);
-        }
-
-        function toggleVista() {
-            document.getElementById('vista-cliente').classList.toggle('active');
-            document.getElementById('vista-admin').classList.toggle('active');
         }
     </script>
 </body>
