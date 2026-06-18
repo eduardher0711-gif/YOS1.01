@@ -6,8 +6,10 @@
     <style>
         :root { --primary-pink: #fd79a8; --dark-pink: #e84393; --bg: #fff5f7; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
+        
         #modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
         #modal img { max-width: 90%; max-height: 90%; border-radius: 10px; }
+
         #vista-auth { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg); z-index:100; display: flex; justify-content:center; align-items:center; }
         .box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
         .sidebar { width: 250px; background: #fff; border-right: 1px solid #ddd; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
@@ -16,17 +18,23 @@
         .badge { background: red; color: white; font-size: 10px; padding: 2px 6px; border-radius: 50%; position: absolute; top: 5px; right: 5px; display: none; }
         .main-content { flex: 1; padding: 30px; overflow-y: auto; }
         .section { display: none; } .section.active { display: block; }
+        
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
         .card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .img-container { width: 100%; height: 180px; overflow: hidden; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
         .img-container img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        
         .btn-add { background: var(--dark-pink); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 5px; }
         .btn-add:disabled { background: #ccc; cursor: not-allowed; }
         input { padding: 8px; margin: 5px 0; width: 90%; border: 1px solid #ccc; border-radius: 5px; }
     </style>
 </head>
 <body>
-    <div id="modal" onclick="this.style.display='none'"><img id="modal-img" src=""></div>
+
+    <div id="modal" onclick="this.style.display='none'">
+        <img id="modal-img" src="">
+    </div>
+
     <div id="vista-auth" class="section active">
         <div class="box">
             <h2 id="status-text">✨ Cargando Glow House... ✨</h2>
@@ -36,6 +44,7 @@
             <button class="btn-add" style="background:#6c5ce7;" onclick="registrar()">REGISTRARME</button>
         </div>
     </div>
+
     <div id="panel-sidebar" class="sidebar">
         <h2>Glow House</h2>
         <div id="info-usuario" style="font-size: 0.9em; margin-bottom: 10px;"></div>
@@ -46,6 +55,7 @@
         <hr style="width:100%">
         <button class="nav-btn" onclick="toggleAdmin()">⚙️ Panel Admin</button>
     </div>
+
     <div id="contenedor-principal" class="main-content">
         <div id="seccion-catalogo" class="section active">
             <h3>Catálogo de Productos</h3>
@@ -62,6 +72,7 @@
             <div id="historial-cliente"></div>
         </div>
     </div>
+
     <div id="seccion-admin" class="section" style="padding: 30px;">
         <h2>Panel Administrativo</h2>
         <button onclick="location.reload()">⬅️ Salir</button>
@@ -77,6 +88,7 @@
         <h3>Pedidos Pendientes</h3>
         <div id="lista-pedidos-admin"></div>
     </div>
+
     <script>
         const URL = "https://script.google.com/macros/s/AKfycbxrWgVriVDp_ZiBDMmfnlgCHC9qSLFyCJGXo4xkaXChlhbsFPrZei0u0Q1_RLBmpaoq/exec";
         let state = { productos: [], pedidos: [], usuarios: [], carrito: [], usuarioActual: null };
@@ -89,11 +101,7 @@
                 state = { ...state, ...d };
                 document.getElementById('btn-login').disabled = false;
                 document.getElementById('status-text').innerText = "✨ Glow House ✨";
-                
-                checkNotificaciones(); 
-                renderCatalogo(); 
-                renderPedidos();
-                
+                checkNotificaciones(); renderCatalogo(); renderPedidos();
                 if(state.usuarioActual) {
                     const user = state.usuarios.find(u => u.telefono == state.usuarioActual.telefono);
                     document.getElementById('info-usuario').innerHTML = `<b>Puntos: ${user ? user.puntos : 0}</b>`;
@@ -102,7 +110,7 @@
             } catch(e) { console.error("Error", e); }
         }
         cargarDatos();
-        setInterval(cargarDatos, 5000);
+        setInterval(cargarDatos, 10000);
 
         function marcarComoVisto() {
             localStorage.setItem('visto', 'true');
@@ -111,12 +119,8 @@
 
         function checkNotificaciones() {
             if(!state.usuarioActual) return;
-            const tienePendientes = state.pedidos.some(p => 
-                String(p.tel).trim() == String(state.usuarioActual.telefono).trim() && 
-                p.estado !== 'Recibido'
-            );
-            
             const visto = localStorage.getItem('visto') === 'true';
+            const tienePendientes = state.pedidos.some(p => String(p.tel).trim() == String(state.usuarioActual.telefono).trim() && p.estado !== 'Recibido');
             document.getElementById('notif-badge').style.display = (tienePendientes && !visto) ? 'block' : 'none';
         }
 
@@ -130,8 +134,8 @@
             state.usuarioActual = state.usuarios.find(u => String(u.telefono).trim() == tel);
             if(state.usuarioActual) { 
                 document.getElementById('vista-auth').style.display = 'none'; 
-                localStorage.setItem('visto', 'false');
-                cargarDatos();
+                document.getElementById('info-usuario').innerHTML = `<b>Puntos: ${state.usuarioActual.puntos || 0}</b>`;
+                checkNotificaciones(); renderPedidos(); 
             } else alert("Usuario no encontrado.");
         }
 
@@ -151,6 +155,10 @@
                 fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify(datos) })
                 .then(() => { 
                     alert("✅ Producto guardado");
+                    document.getElementById('new-prod-nombre').value = "";
+                    document.getElementById('new-prod-precio').value = "";
+                    document.getElementById('new-prod-cat').value = "";
+                    document.getElementById('file-input').value = "";
                     cargarDatos(); 
                 });
             }
@@ -187,7 +195,6 @@
             fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify(datosPedido) }).then(() => { 
                 alert("✅ Pedido enviado! Acumulaste " + puntosGanados + " puntos."); 
                 state.carrito=[]; 
-                localStorage.setItem('visto', 'false');
                 document.getElementById('contenido-carrito').innerHTML=""; 
                 document.getElementById('total-precio').innerText="0.00";
                 cargarDatos();
