@@ -6,6 +6,8 @@
     <style>
         :root { --primary-pink: #fd79a8; --dark-pink: #e84393; --bg: #fff5f7; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
+        #modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
+        #modal img { max-width: 90%; max-height: 90%; border-radius: 10px; }
         #vista-auth { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg); z-index:100; display: flex; justify-content:center; align-items:center; }
         .box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
         .sidebar { width: 250px; background: #fff; border-right: 1px solid #ddd; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
@@ -16,22 +18,24 @@
         .section { display: none; } .section.active { display: block; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
         .card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .img-container { width: 100%; height: 180px; overflow: hidden; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
+        .img-container img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
         .btn-add { background: var(--dark-pink); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 5px; }
+        .btn-add:disabled { background: #ccc; cursor: not-allowed; }
         input { padding: 8px; margin: 5px 0; width: 90%; border: 1px solid #ccc; border-radius: 5px; }
     </style>
 </head>
 <body>
-
+    <div id="modal" onclick="this.style.display='none'"><img id="modal-img" src=""></div>
     <div id="vista-auth" class="section active">
         <div class="box">
-            <h2>✨ Glow House ✨</h2>
+            <h2 id="status-text">✨ Cargando Glow House... ✨</h2>
             <input type="text" id="reg-nombre" placeholder="Nombre completo"><br>
             <input type="tel" id="user-tel" placeholder="Número de teléfono"><br>
-            <button class="btn-add" onclick="login()">INGRESAR</button>
+            <button class="btn-add" id="btn-login" onclick="login()" disabled>INGRESAR</button>
             <button class="btn-add" style="background:#6c5ce7;" onclick="registrar()">REGISTRARME</button>
         </div>
     </div>
-
     <div id="panel-sidebar" class="sidebar">
         <h2>Glow House</h2>
         <button class="nav-btn active" onclick="showSection('seccion-catalogo', this)">🛍️ Catálogo</button>
@@ -41,7 +45,6 @@
         <hr style="width:100%">
         <button class="nav-btn" onclick="toggleAdmin()">⚙️ Panel Admin</button>
     </div>
-
     <div id="contenedor-principal" class="main-content">
         <div id="seccion-catalogo" class="section active">
             <h3>Catálogo de Productos</h3>
@@ -54,11 +57,10 @@
             </div>
         </div>
         <div id="seccion-pedidos" class="section">
-            <h3>Mis Pedidos</h3>
+            <h3>Historial de Pedidos</h3>
             <div id="historial-cliente"></div>
         </div>
     </div>
-
     <div id="seccion-admin" class="section" style="padding: 30px;">
         <h2>Panel Administrativo</h2>
         <button onclick="location.reload()">⬅️ Salir</button>
@@ -74,50 +76,46 @@
         <h3>Pedidos Pendientes</h3>
         <div id="lista-pedidos-admin"></div>
     </div>
-
     <script>
         const URL = "https://script.google.com/macros/s/AKfycbxrWgVriVDp_ZiBDMmfnlgCHC9qSLFyCJGXo4xkaXChlhbsFPrZei0u0Q1_RLBmpaoq/exec";
         let state = { productos: [], pedidos: [], usuarios: [], carrito: [], usuarioActual: null };
         let esAdmin = false;
 
         async function cargarDatos() {
-            const res = await fetch(URL);
-            const d = await res.json();
-            
-            // Si el estado de los pedidos cambió respecto a lo guardado, marcamos como "no visto"
-            const guardado = JSON.parse(localStorage.getItem('ultimosPedidos') || "[]");
-            const hayCambios = JSON.stringify(d.pedidos) !== JSON.stringify(guardado);
-            if (hayCambios) localStorage.setItem('visto', 'false');
-            
-            state = { ...state, ...d };
-            checkNotificaciones();
-            renderCatalogo();
-            if(document.getElementById('seccion-pedidos').classList.contains('active')) renderPedidos();
-            if(esAdmin) renderAdmin();
+            try {
+                const res = await fetch(URL);
+                const d = await res.json();
+                state = { ...state, ...d };
+                document.getElementById('btn-login').disabled = false;
+                document.getElementById('status-text').innerText = "✨ Glow House ✨";
+                checkNotificaciones(); renderCatalogo(); renderPedidos();
+                if(esAdmin) renderAdmin();
+            } catch(e) { console.error("Error", e); }
         }
         cargarDatos();
-        setInterval(cargarDatos, 5000);
+        setInterval(cargarDatos, 10000);
 
         function marcarComoVisto() {
             localStorage.setItem('visto', 'true');
-            localStorage.setItem('ultimosPedidos', JSON.stringify(state.pedidos));
             document.getElementById('notif-badge').style.display = 'none';
-            renderPedidos();
         }
 
         function checkNotificaciones() {
-            if(!state.usuarioActual || localStorage.getItem('visto') === 'true') return;
-            const tieneCambios = state.pedidos.some(p => p.tel == state.usuarioActual.telefono && p.estado !== 'Recibido');
-            document.getElementById('notif-badge').style.display = tieneCambios ? 'block' : 'none';
+            if(!state.usuarioActual) return;
+            const visto = localStorage.getItem('visto') === 'true';
+            const tienePendientes = state.pedidos.some(p => String(p.tel).trim() == String(state.usuarioActual.telefono).trim() && p.estado !== 'Recibido');
+            document.getElementById('notif-badge').style.display = (tienePendientes && !visto) ? 'block' : 'none';
+        }
+
+        function abrirImagen(src) {
+            document.getElementById('modal-img').src = src;
+            document.getElementById('modal').style.display = 'flex';
         }
 
         function login() {
-            const tel = document.getElementById('user-tel').value;
-            state.usuarioActual = state.usuarios.find(u => u.telefono == tel);
-            if(state.usuarioActual) { 
-                document.getElementById('vista-auth').style.display = 'none'; 
-                checkNotificaciones(); 
-            }
+            const tel = document.getElementById('user-tel').value.trim();
+            state.usuarioActual = state.usuarios.find(u => String(u.telefono).trim() == tel);
+            if(state.usuarioActual) { document.getElementById('vista-auth').style.display = 'none'; checkNotificaciones(); renderPedidos(); }
             else alert("Usuario no encontrado.");
         }
 
@@ -128,28 +126,31 @@
             .then(() => alert("Registrado, ahora puedes ingresar."));
         }
 
-        function showSection(id, btn) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(btn) btn.classList.add('active');
+        function procesarYGuardar() {
+            const file = document.getElementById('file-input').files[0];
+            if (!file) { alert("Selecciona una imagen"); return; }
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                const datos = { tipo: "producto", nombre: document.getElementById('new-prod-nombre').value, precio: document.getElementById('new-prod-precio').value, categoria: document.getElementById('new-prod-cat').value, imagen: reader.result };
+                fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify(datos) })
+                .then(() => { 
+                    alert("✅ Producto guardado");
+                    document.getElementById('new-prod-nombre').value = "";
+                    document.getElementById('new-prod-precio').value = "";
+                    document.getElementById('new-prod-cat').value = "";
+                    document.getElementById('file-input').value = "";
+                    cargarDatos(); 
+                });
+            }
+            reader.readAsDataURL(file);
         }
 
         function renderCatalogo() {
             document.getElementById('lista-productos').innerHTML = state.productos.map(p => `
                 <div class="card">
-                    <img src="${p.imagen}" width="100%">
+                    <div class="img-container" onclick="abrirImagen('${p.imagen}')"><img src="${p.imagen}"></div>
                     <h4>${p.nombre}</h4><p>L.${p.precio}</p>
                     <button class="btn-add" onclick="agregarAlCarrito('${p.nombre}', ${p.precio})">Agregar</button>
-                </div>`).join('');
-        }
-
-        function renderPedidos() {
-            if(!state.usuarioActual) return;
-            const misPedidos = state.pedidos.filter(p => p.tel == state.usuarioActual.telefono);
-            document.getElementById('historial-cliente').innerHTML = misPedidos.map(p => `
-                <div class="card" style="text-align:left; margin-bottom:10px; border-left: 5px solid var(--primary-pink);">
-                    <b>Producto:</b> ${p.prod} <br> <b>Estado:</b> ${p.estado}
                 </div>`).join('');
         }
 
@@ -160,24 +161,33 @@
         }
 
         function enviarPedido() {
-            let total = state.carrito.reduce((s, i) => s + parseFloat(i.p), 0) + 140;
-            let p = state.carrito.map(item => fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tipo: "pedido", nombre: state.usuarioActual.nombre, telefono: state.usuarioActual.telefono, producto: item.n, precio: item.p, subtotal: total }) }));
-            Promise.all(p).then(() => { alert("✅ Pedido enviado!"); state.carrito=[]; document.getElementById('contenido-carrito').innerHTML=""; });
+            if (state.carrito.length === 0) { alert("El carrito está vacío."); return; }
+            const datosPedido = { 
+                tipo: "pedido", 
+                nombre: state.usuarioActual.nombre, 
+                telefono: state.usuarioActual.telefono, 
+                carrito: state.carrito,
+                fecha: new Date().toLocaleString()
+            };
+            fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify(datosPedido) }).then(() => { 
+                alert("✅ Pedido enviado!"); state.carrito=[]; document.getElementById('contenido-carrito').innerHTML=""; document.getElementById('total-precio').innerText="0.00";
+            });
         }
 
-        function procesarYGuardar() {
-            const file = document.getElementById('file-input').files[0];
-            const reader = new FileReader();
-            reader.onloadend = function() {
-                fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tipo: "producto", nombre: document.getElementById('new-prod-nombre').value, precio: document.getElementById('new-prod-precio').value, categoria: document.getElementById('new-prod-cat').value, imagen: reader.result }) }).then(() => { alert("✅ Producto guardado"); location.reload(); });
-            }
-            if(file) reader.readAsDataURL(file);
+        function renderPedidos() {
+            if(!state.usuarioActual) return;
+            const misPedidos = state.pedidos.filter(p => String(p.tel).trim() == String(state.usuarioActual.telefono).trim());
+            document.getElementById('historial-cliente').innerHTML = misPedidos.map(p => `
+                <div class="card" style="text-align:left; margin-bottom:10px; border-left: 5px solid var(--primary-pink);">
+                    <b>Fecha:</b> ${p.fecha || 'N/A'} <br> <b>Producto:</b> ${p.prod} <br> <b>Estado:</b> ${p.estado}
+                </div>`).join('');
         }
 
-        async function cambiarEstado(index, nuevo) {
-            await fetch(`${URL}?action=actualizar&index=${index}&estado=${encodeURIComponent(nuevo)}`);
-            localStorage.setItem('visto', 'false'); // Al cambiar estado, forzamos notificación al cliente
-            cargarDatos();
+        function showSection(id, btn) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(btn) btn.classList.add('active');
         }
 
         function toggleAdmin() {
@@ -198,6 +208,12 @@
                     <button onclick="cambiarEstado(${i}, 'En camino')">Camino</button>
                     <button onclick="cambiarEstado(${i}, 'Enviado')">Enviado</button>
                 </div>`).join('');
+        }
+
+        async function cambiarEstado(index, nuevo) {
+            await fetch(`${URL}?action=actualizar&index=${index}&estado=${encodeURIComponent(nuevo)}`);
+            localStorage.setItem('visto', 'false');
+            cargarDatos();
         }
     </script>
 </body>
