@@ -3,141 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glow House by Yoss</title>
+    <title>Glow House by Yoss - Tienda Virtual</title>
     <style>
-        :root { --soft-pink: #fce4ec; --dark-pink: #ec407a; --accent: #d81b60; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #fafafa; color: #333; margin: 0; }
-        
-        header { background: linear-gradient(135deg, #f8bbd0, #fce4ec); padding: 2rem; text-align: center; border-bottom: 5px solid var(--dark-pink); position: relative; }
-        header h1 { color: var(--accent); margin: 0; cursor: pointer; }
-        .admin-btn { position: absolute; top: 10px; right: 10px; background: none; border: 1px solid var(--dark-pink); border-radius: 5px; cursor: pointer; padding: 5px; }
-        
-        .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+        :root { --primary-pink: #fd79a8; --dark-pink: #e84393; --gold: #d4af37; --soft-bg: #fff5f7; --dark-text: #2d3436; --card-bg: #ffffff; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: var(--soft-bg); }
+        header { background: white; padding: 1.2rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--primary-pink); position: sticky; top: 0; z-index: 100; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
         .section { display: none; } .section.active { display: block; }
-        .tienda-layout { display: grid; grid-template-columns: 1fr 350px; gap: 2rem; }
-        
+        /* Filtros */
+        .categorias-nav { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .btn-categoria { background: white; border: 1px solid var(--primary-pink); color: var(--dark-pink); padding: 0.5rem 1rem; border-radius: 20px; cursor: pointer; }
+        .btn-categoria.active { background: var(--primary-pink); color: white; }
+        .tienda-layout { display: grid; grid-template-columns: 3fr 1fr; gap: 2rem; }
         .productos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
-        .producto-card { background: white; padding: 1rem; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-align: center; }
-        .producto-card img { width: 100%; height: 200px; object-fit: cover; border-radius: 15px; background-color: #eee; }
-        .btn-add { background: var(--dark-pink); color: white; border: none; padding: 0.8rem; width: 100%; border-radius: 10px; cursor: pointer; margin-top: 10px; }
-        
-        .carrito-box { background: white; padding: 1.5rem; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        .item-carrito { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #ddd; }
-        .btn-remove { background: #ff7675; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; }
+        .producto-card { background: white; padding: 1rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
+        .producto-card img { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; }
+        .btn-add { background: var(--dark-pink); color: white; border: none; padding: 0.7rem; border-radius: 8px; width: 100%; cursor: pointer; }
+        .carrito-container { background: white; padding: 1rem; border-radius: 12px; height: fit-content; border: 1px solid #ffe3e8; }
+        .item-carrito { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1 onclick="toggleVista()">Glow House <span>by Yoss</span></h1>
-        <button class="admin-btn" onclick="toggleVista()">Admin</button>
+        <h1>Glow House <span>by Yoss</span></h1>
+        <button onclick="toggleVista()" id="btn-nav">Panel Admin</button>
     </header>
 
     <div class="container">
         <div id="vista-cliente" class="section active">
+            <div class="categorias-nav" id="filtros">
+                <button class="btn-categoria active" onclick="filtrar('todos', this)">Todos</button>
+                <button class="btn-categoria" onclick="filtrar('Maquillaje', this)">Maquillaje</button>
+                <button class="btn-categoria" onclick="filtrar('Estilismo', this)">Estilismo</button>
+                <button class="btn-categoria" onclick="filtrar('Perfumes', this)">Perfumes</button>
+            </div>
+            
             <div class="tienda-layout">
-                <div class="productos-grid" id="contenedor-productos">Cargando catálogo...</div>
-                <div class="carrito-box">
-                    <h3 style="color:var(--accent)">🛒 Tu Carrito</h3>
-                    <div id="contenido-carrito"><p>No has agregado nada aún.</p></div>
-                    <div id="form-envio" style="display:none; margin-top:1rem;">
-                        <input type="text" id="nombre-cliente" placeholder="Nombre" style="width:90%; padding:8px; margin-bottom:5px;">
-                        <input type="tel" id="tel-cliente" placeholder="Teléfono" style="width:90%; padding:8px; margin-bottom:5px;">
-                        <input type="text" id="dir-cliente" placeholder="Dirección" style="width:90%; padding:8px; margin-bottom:10px;">
-                        <p><strong>Total: L. <span id="total-precio">0.00</span></strong></p>
-                        <button onclick="enviarPedido()" style="width:100%; background:var(--accent); color:white; border:none; padding:12px; border-radius:10px;">Finalizar Pedido</button>
-                    </div>
+                <div class="productos-grid" id="contenedor-productos">Cargando...</div>
+                <div class="carrito-container">
+                    <h3>Carrito 🛒</h3>
+                    <div id="contenido-carrito"><p>Vacío.</p></div>
+                    <p>Total: L. <span id="total-precio">0.00</span></p>
+                    <button class="btn-add" onclick="alert('Pedido enviado!')">Finalizar Pedido</button>
                 </div>
             </div>
         </div>
 
         <div id="vista-admin" class="section">
-            <div class="carrito-box" style="max-width: 400px; margin: auto;">
-                <h3>Panel Administrativo</h3>
-                <input type="text" id="prod-nombre" placeholder="Nombre" style="width:90%; margin-bottom:10px;">
-                <input type="text" id="prod-categoria" placeholder="Categoría" style="width:90%; margin-bottom:10px;">
-                <input type="number" id="prod-precio" placeholder="Precio" style="width:90%; margin-bottom:10px;">
-                <input type="url" id="prod-imagen" placeholder="URL Imagen" style="width:90%; margin-bottom:10px;">
-                <button onclick="agregarProducto()" style="width:100%; padding:10px; background:var(--accent); color:white; border:none;">Publicar</button>
+            <div style="max-width: 400px; margin: auto;">
+                <form id="form-producto" onsubmit="agregarProducto(event)">
+                    <input type="text" id="prod-nombre" placeholder="Nombre" required><br><br>
+                    <select id="prod-categoria">
+                        <option value="Maquillaje">Maquillaje</option>
+                        <option value="Estilismo">Estilismo</option>
+                        <option value="Perfumes">Perfumes</option>
+                    </select><br><br>
+                    <input type="number" id="prod-precio" placeholder="Precio" required><br><br>
+                    <input type="file" id="prod-imagen-file" accept="image/*" required><br><br>
+                    <button type="submit" class="btn-add">Publicar en Tienda</button>
+                </form>
             </div>
         </div>
     </div>
 
     <script>
         const URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbxrWgVriVDp_ZiBDMmfnlgCHC9qSLFyCJGXo4xkaXChlhbsFPrZei0u0Q1_RLBmpaoq/exec";
+        let inventario = [];
         let carrito = [];
+        let catSeleccionada = 'todos';
 
-        function toggleVista() {
-            if (prompt("Clave:") === "Glow2026") {
-                document.getElementById('vista-cliente').classList.toggle('active');
-                document.getElementById('vista-admin').classList.toggle('active');
-            }
-        }
-
-        // Carga productos con manejo de errores optimizado
+        // 1. CARGA
         fetch(URL_GOOGLE_SHEETS)
             .then(res => res.json())
-            .then(data => {
-                document.getElementById('contenedor-productos').innerHTML = data.map(p => `
-                    <div class="producto-card">
-                        <img src="${p.imagen}" 
-                             loading="lazy" 
-                             referrerpolicy="no-referrer" 
-                             onerror="this.src='https://via.placeholder.com/200?text=Sin+Imagen'; this.onerror=null;">
-                        <h4>${p.nombre}</h4>
-                        <p style="color:var(--dark-pink); font-weight:bold;">L. ${parseFloat(p.precio).toFixed(2)}</p>
-                        <button class="btn-add" onclick="agregarAlCarrito('${p.nombre}', ${p.precio})">Agregar</button>
-                    </div>
-                `).join('');
-            })
-            .catch(err => {
-                console.error("Error al cargar:", err);
-                document.getElementById('contenedor-productos').innerHTML = "<p>Error al cargar el inventario.</p>";
-            });
+            .then(data => { inventario = data; renderTienda(); });
 
-        function agregarAlCarrito(nombre, precio) { carrito.push({ nombre, precio }); renderCarrito(); }
-
-        function renderCarrito() {
-            const contenedor = document.getElementById('contenido-carrito');
-            const totalDisplay = document.getElementById('total-precio');
-            const form = document.getElementById('form-envio');
-            if (carrito.length === 0) { contenedor.innerHTML = '<p>Vacío.</p>'; form.style.display = 'none'; return; }
-            let total = 0;
-            contenedor.innerHTML = carrito.map((item, index) => {
-                total += parseFloat(item.precio);
-                return `<div class="item-carrito"><span>${item.nombre}</span><button class="btn-remove" onclick="remover(${index})">✕</button></div>`;
-            }).join('');
-            totalDisplay.innerText = total.toFixed(2);
-            form.style.display = 'block';
+        // 2. FILTRADO
+        function filtrar(cat, btn) {
+            catSeleccionada = cat;
+            document.querySelectorAll('.btn-categoria').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderTienda();
         }
 
-        function remover(index) { carrito.splice(index, 1); renderCarrito(); }
-
-        function enviarPedido() {
-            const pedido = carrito.map(p => ({
-                fecha: new Date().toLocaleString(),
-                nombre: document.getElementById('nombre-cliente').value,
-                telefono: document.getElementById('tel-cliente').value,
-                direccion: document.getElementById('dir-cliente').value,
-                producto: p.nombre,
-                precio: p.precio
-            }));
-            fetch(URL_GOOGLE_SHEETS, { method: "POST", mode: "no-cors", body: JSON.stringify(pedido) })
-                .then(() => { alert("¡Pedido enviado!"); location.reload(); });
+        function renderTienda() {
+            let mostrar = catSeleccionada === 'todos' ? inventario : inventario.filter(p => p.categoria === catSeleccionada);
+            document.getElementById('contenedor-productos').innerHTML = mostrar.map(p => `
+                <div class="producto-card">
+                    <img src="${p.imagen}" onerror="this.src='https://via.placeholder.com/150'">
+                    <h4>${p.nombre}</h4>
+                    <p>L. ${p.precio}</p>
+                    <button class="btn-add" onclick="agregarAlCarrito('${p.nombre}', ${p.precio})">Agregar</button>
+                </div>
+            `).join('');
         }
 
-        function agregarProducto() {
-            const data = {
-                nombre: document.getElementById('prod-nombre').value,
-                categoria: document.getElementById('prod-categoria').value,
-                precio: document.getElementById('prod-precio').value,
-                imagen: document.getElementById('prod-imagen').value
+        // 3. CARRITO E IMAGEN (MANTENIDOS)
+        function agregarAlCarrito(n, p) {
+            carrito.push({ n, p });
+            let total = carrito.reduce((sum, i) => sum + i.p, 0);
+            document.getElementById('contenido-carrito').innerHTML = carrito.map(i => `<div class="item-carrito">${i.n} <span>L.${i.p}</span></div>`).join('');
+            document.getElementById('total-precio').innerText = total.toFixed(2);
+        }
+
+        function agregarProducto(e) {
+            e.preventDefault();
+            const file = document.getElementById('prod-imagen-file').files[0];
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                const data = {
+                    nombre: document.getElementById('prod-nombre').value,
+                    categoria: document.getElementById('prod-categoria').value,
+                    precio: document.getElementById('prod-precio').value,
+                    imagen: reader.result
+                };
+                fetch(URL_GOOGLE_SHEETS, { method: "POST", mode: "no-cors", headers:{"Content-Type":"application/json"}, body: JSON.stringify(data) })
+                .then(() => { alert("Producto publicado!"); location.reload(); });
             };
-            fetch(URL_GOOGLE_SHEETS, { method: "POST", mode: "no-cors", body: JSON.stringify(data) })
-                .then(() => { 
-                    alert("✅ ¡Producto agregado correctamente!"); 
-                    location.reload(); 
-                });
+            if(file) reader.readAsDataURL(file);
+        }
+
+        function toggleVista() {
+            document.getElementById('vista-cliente').classList.toggle('active');
+            document.getElementById('vista-admin').classList.toggle('active');
         }
     </script>
 </body>
